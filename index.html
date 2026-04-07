@@ -110,14 +110,15 @@
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBJEBAMi2yws_tVHEj-NM7M4qh9YNdTNz0",
-      authDomain: "mini-chat-app-e83f5.firebaseapp.com",
-      projectId: "mini-chat-app-e83f5",
-      storageBucket: "mini-chat-app-e83f5.firebasestorage.app",
-      messagingSenderId: "530232332980",
-      appId: "1:530232332980:web:50aa6b73aa89661fa47de1"
-    };
+    
+	const firebaseConfig = {
+		apiKey: "AIzaSyBJEBAMi2yws_tVHEj-NM7M4qh9YNdTNz0",
+		authDomain: "mini-chat-app-e83f5.firebaseapp.com",
+		projectId: "mini-chat-app-e83f5",
+		storageBucket: "mini-chat-app-e83f5.firebasestorage.app",
+		messagingSenderId: "530232332980",
+		appId: "1:530232332980:web:50aa6b73aa89661fa47de1"
+};
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
