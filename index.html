@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini React + Firebase Chat</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    #root {
+      max-width: 720px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    .status {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 12px;
+      word-break: break-all;
+    }
+
+    .chat-box {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      height: 400px;
+      overflow-y: auto;
+      padding: 12px;
+      background: #fafafa;
+      margin-bottom: 12px;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #e9f3ff;
+    }
+
+    .message.mine {
+      background: #dff7df;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="module">
+    import React, { useEffect, useMemo, useRef, useState } from "https://esm.sh/react@18";
+    import { createRoot } from "https://esm.sh/react-dom@18/client";
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      signInAnonymously,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJEBAMi2yws_tVHEj-NM7M4qh9YNdTNz0",
+      authDomain: "mini-chat-app-e83f5.firebaseapp.com",
+      projectId: "mini-chat-app-e83f5",
+      storageBucket: "mini-chat-app-e83f5.firebasestorage.app",
+      messagingSenderId: "530232332980",
+      appId: "1:530232332980:web:50aa6b73aa89661fa47de1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    function App() {
+      const [user, setUser] = useState(null);
+      const [messages, setMessages] = useState([]);
+      const [text, setText] = useState("");
+      const [loading, setLoading] = useState(true);
+      const bottomRef = useRef(null);
+
+      const roomId = "global-chat";
+      const messagesRef = useMemo(() => collection(db, "chats", roomId, "messages"), []);
+
+      useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+          if (!currentUser) {
+            try {
+              await signInAnonymously(auth);
+            } catch (error) {
+              console.error("匿名登入失敗:", error);
+              alert("匿名登入失敗，請檢查 firebaseConfig 是否正確，並確認匿名登入已啟用。");
+              setLoading(false);
+            }
+            return;
+          }
+
+          setUser(currentUser);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
+      }, []);
+
+      useEffect(() => {
+        const q = query(messagesRef, orderBy("createdAt", "asc"));
+
+        const unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const nextMessages = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setMessages(nextMessages);
+          },
+          (error) => {
+            console.error("讀取訊息失敗:", error);
+            alert("讀取訊息失敗，請檢查 Firestore 規則是否已正確發布。");
+          }
+        );
+
+        return () => unsubscribe();
+      }, [messagesRef]);
+
+      useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, [messages]);
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        const trimmed = text.trim();
+        if (!trimmed || !user) return;
+
+        try {
+          await addDoc(messagesRef, {
+            text: trimmed,
+            uid: user.uid,
+            createdAt: serverTimestamp()
+          });
+          setText("");
+        } catch (error) {
+          console.error("送訊息失敗:", error);
+          alert("送訊息失敗，請檢查 Firestore 規則。");
+        }
+      }
+
+      return React.createElement(
+        "div",
+        null,
+        React.createElement("h1", null, "最小聊天 App"),
+        React.createElement(
+          "div",
+          { className: "status" },
+          loading ? "登入中..." : user ? `已登入：${user.uid}` : "尚未登入"
+        ),
+        React.createElement(
+          "div",
+          { className: "chat-box" },
+          messages.length === 0
+            ? React.createElement("div", { className: "status" }, "還沒有訊息，先送一則試試看")
+            : null,
+          messages.map((msg) =>
+            React.createElement(
+              "div",
+              {
+                key: msg.id,
+                className: `message ${msg.uid === user?.uid ? "mine" : ""}`
+              },
+              React.createElement(
+                "div",
+                { className: "meta" },
+                msg.uid === user?.uid ? "我" : msg.uid
+              ),
+              React.createElement("div", null, msg.text)
+            )
+          ),
+          React.createElement("div", { ref: bottomRef })
+        ),
+        React.createElement(
+          "form",
+          { onSubmit: handleSubmit },
+          React.createElement("input", {
+            type: "text",
+            placeholder: "輸入訊息...",
+            value: text,
+            onChange: (e) => setText(e.target.value),
+            disabled: loading || !user
+          }),
+          React.createElement(
+            "button",
+            { type: "submit", disabled: loading || !user || !text.trim() },
+            "送出"
+          )
+        )
+      );
+    }
+
+    const root = createRoot(document.getElementById("root"));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
