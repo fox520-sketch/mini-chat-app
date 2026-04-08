@@ -109,16 +109,26 @@
       onSnapshot,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+	
 
-    
-	const firebaseConfig = {
-		apiKey: "AIzaSyBJEBAMi2yws_tVHEj-NM7M4qh9YNdTNz0",
-		authDomain: "mini-chat-app-e83f5.firebaseapp.com",
-		projectId: "mini-chat-app-e83f5",
-		storageBucket: "mini-chat-app-e83f5.firebasestorage.app",
-		messagingSenderId: "530232332980",
-		appId: "1:530232332980:web:50aa6b73aa89661fa47de1"
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBJEbAMi2yws_tVHEj-NM7M4qh9YNdTNz0",
+  authDomain: "mini-chat-app-e83f5.firebaseapp.com",
+  projectId: "mini-chat-app-e83f5",
+  storageBucket: "mini-chat-app-e83f5.firebasestorage.app",
+  messagingSenderId: "530232332980",
+  appId: "1:530232332980:web:50aa6b73aa89661fa47de1"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
